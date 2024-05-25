@@ -13,7 +13,7 @@ w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FR
 # region_points = [(0, h ), (w, h), (w, 0), (0, 0)]
 line_points = [(0 + 100, h - 100 ), (w - 100, h - 100), (w - 100, 0 + 100), (0 + 100, 0 + 100)]
 
-# 要計數的物體類別，人（0）、汽車（2）和摩托車（3）
+# 要計數的物體類別，car（0）、person（2）和 motorcycle（3）
 classes_to_count = [0, 2, 3]
 
 # 將處理後的影像寫入新的影片檔案
@@ -42,6 +42,9 @@ while cap.isOpened():
     # 使用 counter.start_counting 在影像中計數物體並更新影像 im0
     im0 = counter.start_counting(im0, tracks)
     video_writer.write(im0)
+
+    # 輸出特定區域的車子總數
+    print("car：" + str(counter.in_counts + counter.out_counts))
 
 # 釋放
 cap.release()
