@@ -16,7 +16,7 @@ current_region = None
 
 def run(
     weights="../models/v6.pt",
-    source="../Khare_testvideo_01.mp4",
+    source="../Khare_testvideo_03.mp4",
     device="0",
     view_img=True,
     save_img=True,
