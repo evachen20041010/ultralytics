@@ -16,7 +16,7 @@ current_region = None
 
 def run(
     weights="../models/v6.pt",
-    source="../Khare_testvideo_03.mp4",
+    source="../Khare_testvideo_02.mp4",
     device="0",
     view_img=True,
     save_img=True,
@@ -128,7 +128,6 @@ def run(
         if view_img:
             if vid_frame_count == 1:
                 cv2.namedWindow("Ultralytics YOLOv8 Region Counter Movable")
-                # cv2.setMouseCallback("Ultralytics YOLOv8 Region Counter Movable", mouse_callback)
             cv2.imshow("Ultralytics YOLOv8 Region Counter Movable", frame)
 
         if save_img:
