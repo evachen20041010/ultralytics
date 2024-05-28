@@ -15,8 +15,8 @@ track_history = defaultdict(list)
 current_region = None
 
 def run(
-    weights="../models/v6.pt",
-    source="../Khare_testvideo_02.mp4",
+    weights="./models/v6.pt",
+    source="./Khare_testvideo_02.mp4",
     device="0",
     view_img=True,
     save_img=True,
@@ -58,7 +58,7 @@ def run(
     ]
 
     # Output setup
-    save_dir = increment_path(Path("ultralytics_rc_output") / "exp", exist_ok)
+    save_dir = increment_path(Path("./code/ultralytics_rc_output") / "exp", exist_ok)
     save_dir.mkdir(parents=True, exist_ok=True)
     video_writer = cv2.VideoWriter(str(save_dir / f"{Path(source).stem}.mp4"), fourcc, fps, (frame_width, frame_height))
 
