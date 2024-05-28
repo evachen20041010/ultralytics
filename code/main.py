@@ -10,12 +10,39 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import storage as firebase_storage
+from google.cloud import storage
+
 # 追蹤路線歷史
 track_history = defaultdict(list)
+
+cred = credentials.Certificate("code/firebase/key.json")
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'parking-test-f9490.appspot.com'
+})
+
+# Use firebase_admin to get the bucket name.
+bucket_name = firebase_storage.bucket().name
+
+def upload_blob(bucket_name, source_file_name, destination_blob_name):
+    """Uploads a file to the bucket."""
+    # Initialize the Google Cloud Storage client with the project ID.
+    storage_client = storage.Client.from_service_account_json('code/firebase/key.json')
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    # Upload the file.
+    blob.upload_from_filename(source_file_name)
+
+    print(f"File {source_file_name} uploaded to {destination_blob_name}.")
 
 def run(
     weights="./models/v6.pt",  # model 檔案的路徑
     source="./Khare_testvideo_01.mp4",  # 影片來源檔路徑
+    source_name="Khare_testvideo_01",
     device="0",  # 使用設備，"0" -> GPU
     view_img=True,  # 顯示影像
     save_img=True,  # 保存影像(影片)
@@ -145,6 +172,7 @@ def run(
                 resized_frame = cv2.resize(frame, (0, 0), fx=resize_factor, fy=resize_factor)
                 frame_filename = frames_dir / f"frame_{vid_frame_count:04d}.jpg"
                 cv2.imwrite(str(frame_filename), resized_frame)
+                upload_blob(bucket_name, frame_filename, f"yolov8/{source_name}/images/frame_{vid_frame_count:04d}.jpg")
 
         for region in counting_regions:  # 重新初始化每個區域的計數
             region["counts"] = 0

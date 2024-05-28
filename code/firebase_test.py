@@ -25,4 +25,5 @@ if __name__ == "__main__":
     # Use firebase_admin to get the bucket name.
     bucket_name = firebase_storage.bucket().name
 
-    upload_blob(bucket_name, 'runs/detect/train9/train_batch0.jpg', 'yolov8/train_batch0.jpg')
+    video = "Khare_testvideo_01"
+    upload_blob(bucket_name, 'runs/detect/train9/train_batch0.jpg', f'yolov8/{video}/train_batch0.jpg')
