@@ -14,6 +14,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import storage as firebase_storage
 from google.cloud import storage
+from firebase_admin import firestore
 
 # 追蹤路線歷史
 track_history = defaultdict(list)
@@ -27,7 +28,7 @@ firebase_admin.initialize_app(cred, {
 bucket_name = firebase_storage.bucket().name
 
 # 上傳資料到 Firebase Storage
-def upload_blob(bucket_name, source_file_name, destination_blob_name):
+def upload_storage(bucket_name, source_file_name, destination_blob_name):
     # 使用專案 ID 初始化 Google Cloud Storage 用戶端
     storage_client = storage.Client.from_service_account_json('code/firebase/key.json')
 
@@ -38,6 +39,9 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     blob.upload_from_filename(source_file_name)
 
     print(f"File {source_file_name} uploaded to {destination_blob_name}.")
+
+# 上傳資料到 Firebase Storage
+# def upload_firestore():
 
 def run(
     weights="./models/v6.pt",  # model 檔案的路徑
@@ -197,7 +201,7 @@ def run(
                 resized_frame = cv2.resize(frame, (0, 0), fx=resize_factor, fy=resize_factor)
                 frame_filename = frames_dir / f"frame_{vid_frame_count:04d}.jpg"
                 cv2.imwrite(str(frame_filename), resized_frame)
-                upload_blob(bucket_name, frame_filename, f"yolov8/{source_name}/images/frame_{vid_frame_count:04d}.jpg")
+                upload_storage(bucket_name, frame_filename, f"yolov8/{source_name}/images/frame_{vid_frame_count:04d}.jpg")
 
         for region in counting_regions:  # 重新初始化每個區域的計數
             region["counts"] = 0
