@@ -40,16 +40,26 @@ def upload_storage(bucket_name, source_file_name, destination_blob_name):
 
     print(f"File {source_file_name} uploaded to {destination_blob_name}.")
 
-# 上傳資料到 Firebase Storage
-# def upload_firestore():
+# 上傳資料到 Firestore
+def upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space):
+    db = firestore.client()
+
+    doc_ref = db.collection(parking_name).document(area_name)
+    doc_ref.set({"total_space": total_space, "occupied_space": occupied_space, "empty_space": empty_space})
+
+    print(f"total_space={total_space}, occupied_space={occupied_space}, empty_space={empty_space}")
+    print(f"Data uploaded to {parking_name}/{area_name}.")
 
 def run(
+    source,  # 影片來源檔路徑
+    parking_name,   # 用來設定上傳到 firebase 的停車場資料夾名稱
+    area_name,   # 用來設定上傳到 firebase 的區塊資料夾名稱
+    total_space,    # 車位總數量
     weights="./models/v6.pt",  # model 檔案的路徑
-    source="./Khare_testvideo_01.mp4",  # 影片來源檔路徑
-    source_name="Khare_testvideo_01",   # 用來設定上傳到 firebase 資料夾的名稱
     device="0",  # 使用設備，"0" -> GPU
     view_img=True,  # 顯示影像
     save_img=True,  # 保存影像(影片)
+    upload_firebase=True, # 儲存資料到 Firebase
     exist_ok=False,
     classes=[0],  # 要檢測的類別(car)
     line_thickness=2,  # 框線的寬度
@@ -60,6 +70,8 @@ def run(
     resize_factor=0.5  # 圖片縮放比例
 ):
     vid_frame_count = 0  # 記錄當前經過的幀數
+    occupied_space = 0  # 已被使用車位數量
+    empty_space = 0 # 空車位數量
 
     # 檢查影片來源路徑是否存在
     if not Path(source).exists():
@@ -157,7 +169,9 @@ def run(
 
         # 繪製計數區域
         for region in counting_regions:
-            region_label = str(region["counts"])
+            occupied_space = int(region["counts"])
+            empty_space = total_space - occupied_space
+            region_label = f"occupied space: {occupied_space}\nempty space: {empty_space}"
             region_color = region["region_color"]
             region_text_color = region["text_color"]
 
@@ -170,20 +184,30 @@ def run(
             # 在左上角顯示車子數量標籤
             text_x, text_y = 10, 30
             
-            # 
-            text_size, _ = cv2.getTextSize(
-                region_label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.7, thickness=line_thickness
-            )
-            cv2.rectangle(
-                frame,
-                (text_x - 5, text_y - text_size[1] - 5),
-                (text_x + text_size[0] + 5, text_y + 5),
-                region_color,
-                -1,
-            )
-            cv2.putText(
-                frame, region_label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, region_text_color, line_thickness
-            )
+            # 將文字分割成行
+            region_label_lines = region_label.split('\n')
+
+            # 繪製每一行文本
+            for i, line in enumerate(region_label_lines):
+                # 計算每行的位置
+                line_y = text_y + i * 30  # 根據字體大小和間距調整 20
+
+                # 計算文字大小以繪製背景矩形
+                text_size, _ = cv2.getTextSize(line, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.7, thickness=line_thickness)
+
+                # 在文字後面繪製一個矩形背景
+                cv2.rectangle(
+                    frame,
+                    (text_x - 5, line_y - text_size[1] - 5),
+                    (text_x + text_size[0] + 5, line_y + 5),
+                    region_color,
+                    -1,
+                )
+
+                # 繪製文字線條
+                cv2.putText(
+                    frame, line, (text_x, line_y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, region_text_color, line_thickness
+                )
 
         # 顯示處理後的影像
         if view_img:
@@ -191,6 +215,7 @@ def run(
                 cv2.namedWindow("Ultralytics YOLOv8 Region Counter Movable")
             cv2.imshow("Ultralytics YOLOv8 Region Counter Movable", frame)
 
+        # 保存影像、圖片
         if save_img:
             # 保存影像
             video_writer.write(frame)
@@ -201,7 +226,11 @@ def run(
                 resized_frame = cv2.resize(frame, (0, 0), fx=resize_factor, fy=resize_factor)
                 frame_filename = frames_dir / f"frame_{vid_frame_count:04d}.jpg"
                 cv2.imwrite(str(frame_filename), resized_frame)
-                upload_storage(bucket_name, frame_filename, f"yolov8/{source_name}/images/frame_{vid_frame_count:04d}.jpg")
+
+                # 上傳資料到 Firebase
+                if upload_firebase:
+                    upload_storage(bucket_name, frame_filename, f"yolov8/{parking_name}/{area_name}/images/frame_{vid_frame_count:04d}.jpg")
+                    upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space)
 
         for region in counting_regions:  # 重新初始化每個區域的計數
             region["counts"] = 0
@@ -215,8 +244,9 @@ def run(
     cv2.destroyAllWindows()
 
 def main():
-    """主函數。"""
-    run()
+    # 選擇要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
+    # run(source="./Khare_testvideo_01.mp4", parking_name="Khare_testvideo", area_name="Khare_testvideo_01", total_space=200)
+    run(source="./Khare_testvideo_02.mp4", parking_name="Khare_testvideo", area_name="Khare_testvideo_02", total_space=100)
 
 if __name__ == "__main__":
     main()
