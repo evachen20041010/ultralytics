@@ -19,16 +19,16 @@ import multiprocessing as mp
 track_history = defaultdict(list)
 
 # Firebase 初始化
-cred = credentials.Certificate("code/firebase/parking_key.json")
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'parking-cce55.appspot.com'
-})
+# cred = credentials.Certificate("code/firebase/parking_key.json")
+# firebase_admin.initialize_app(cred, {
+#     'storageBucket': 'parking-cce55.appspot.com'
+# })
 
 # 測試用資料庫
-# cred = credentials.Certificate("code/firebase/parking-test_key.json")
-# firebase_admin.initialize_app(cred, {
-#     'storageBucket': 'parking-test-f9490.appspot.com'
-# })
+cred = credentials.Certificate("code/firebase/parking-test_key.json")
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'parking-test-f9490.appspot.com'
+})
 
 # 取得 bucket 名稱
 bucket_name = firebase_storage.bucket().name
@@ -36,10 +36,10 @@ bucket_name = firebase_storage.bucket().name
 # 上傳資料到 Firebase Storage
 def upload_storage(bucket_name, source_file_name, destination_blob_name):
     # 使用專案 ID 初始化 Google Cloud Storage 用戶端
-    storage_client = storage.Client.from_service_account_json('code/firebase/parking_key.json')
+    # storage_client = storage.Client.from_service_account_json('code/firebase/parking_key.json')
 
     # 測試用資料庫
-    # storage_client = storage.Client.from_service_account_json('code/firebase/parking-test_key.json')
+    storage_client = storage.Client.from_service_account_json('code/firebase/parking-test_key.json')
     
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
@@ -108,7 +108,7 @@ def process_video(
     ]
 
     # 資料儲存設置
-    save_dir = increment_path(Path("./code/ultralytics_rc_output") / "exp", exist_ok)
+    save_dir = increment_path(Path("./code/ultralytics_rc_output") / f"{area_name}", exist_ok)
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # 影片儲存設置
@@ -250,8 +250,9 @@ def process_video(
 def main():
     # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
     video_sources = [
-        ("./Khare_testvideo_01.mp4", "Khare_testvideo", "Khare_testvideo_01", 200),
-        ("./Khare_testvideo_02.mp4", "Khare_testvideo", "Khare_testvideo_02", 100),
+        ("./video/first_parking_01.mp4", "first_parking", "first_parking_01", 200),
+        ("./video/first_parking_02.mp4", "first_parking", "first_parking_02", 100),
+        ("./video/second_parking_01.mp4", "second_parking", "second_parking_01", 50),
     ]
 
     weights = "./models/v6.pt"  # model 檔案的路徑
@@ -259,7 +260,7 @@ def main():
     view_img = True # 顯示影像
     save_img = True # 保存影像(影片)
     upload_firebase = True  # 儲存資料到 Firebase
-    exist_ok = False
+    exist_ok = True    # 設置為 False 會創建新的遞增目錄名稱
     classes = [0]   # 要檢測的類別(car)
     line_thickness = 2  # 框線的寬度
     track_thickness = 2 # 追蹤線的寬度
