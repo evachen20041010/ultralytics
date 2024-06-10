@@ -19,16 +19,16 @@ import multiprocessing as mp
 track_history = defaultdict(list)
 
 # Firebase 初始化
-# cred = credentials.Certificate("code/firebase/parking_key.json")
-# firebase_admin.initialize_app(cred, {
-#     'storageBucket': 'parking-cce55.appspot.com'
-# })
+cred = credentials.Certificate("code/firebase/parking_key.json")
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'parking-cce55.appspot.com'
+})
 
 # 測試用資料庫
-cred = credentials.Certificate("code/firebase/parking-test_key.json")
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'parking-test-f9490.appspot.com'
-})
+# cred = credentials.Certificate("code/firebase/parking-test_key.json")
+# firebase_admin.initialize_app(cred, {
+#     'storageBucket': 'parking-test-f9490.appspot.com'
+# })
 
 # 取得 bucket 名稱
 bucket_name = firebase_storage.bucket().name
@@ -36,10 +36,10 @@ bucket_name = firebase_storage.bucket().name
 # 上傳資料到 Firebase Storage
 def upload_storage(bucket_name, source_file_name, destination_blob_name):
     # 使用專案 ID 初始化 Google Cloud Storage 用戶端
-    # storage_client = storage.Client.from_service_account_json('code/firebase/parking_key.json')
+    storage_client = storage.Client.from_service_account_json('code/firebase/parking_key.json')
 
     # 測試用資料庫
-    storage_client = storage.Client.from_service_account_json('code/firebase/parking-test_key.json')
+    # storage_client = storage.Client.from_service_account_json('code/firebase/parking-test_key.json')
     
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
@@ -269,9 +269,14 @@ def main():
     save_interval_seconds = 5   # 保存圖片的時間間隔(秒)
     resize_factor = 0.5 # 圖片縮放比例
 
+    # 建立一個包含多個進程的處理池 (Pool)，每個影片來源對應一個進程
+    # (with -> 處理池使用完後會自動關閉，釋放資源)
     with mp.Pool(processes=len(video_sources)) as pool:
-        pool.starmap(process_video, [(
-            source, 
+        # 將函數應用於參數的序列，允許將多個參數傳遞給函數
+        pool.starmap(
+            process_video,  # 要並行運行的函數
+            # 要傳遞給 process_video 函數的參數
+            [(source, 
             parking_name, 
             area_name, 
             total_space, 
@@ -285,7 +290,8 @@ def main():
             region_thickness, 
             stationary_threshold, 
             save_interval_seconds, 
-            resize_factor) for source, parking_name, area_name, total_space in video_sources])
+            resize_factor) for source, parking_name, area_name, total_space in video_sources]
+        )
 
 if __name__ == "__main__":
     main()
