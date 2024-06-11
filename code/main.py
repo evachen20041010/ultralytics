@@ -172,7 +172,7 @@ def process_video(
                             if region["polygon"].contains(Point((bbox_center[0], bbox_center[1]))):
                                 region["counts"] += 1
 
-        # 繪製計數區域
+        # 繪製計數區域，更新車位資訊
         for region in counting_regions:
             occupied_space = int(region["counts"])
             empty_space = total_space - occupied_space
