@@ -143,7 +143,8 @@ def process_video(
             # 取出空車位、已被使用車位數量
             occupied_space = management.labels_dict['Occupancy']    # 已占用車位
             empty_space = management.labels_dict['Available']   # 空車位
-            print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}")
+            total_space = occupied_space + empty_space
+            print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}, Total: {total_space}")
 
             # annotator = Annotator(frame, line_width=line_thickness, example=str(names))
 
