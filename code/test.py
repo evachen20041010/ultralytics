@@ -101,19 +101,16 @@ def process_video(
         results = management.model.track(frame, persist=True, classes=classes)
 
         if results[0].boxes.id is not None:
-            boxes = results[0].boxes.xyxy.cpu().tolist()    # 提取邊界框坐標
+            boxes = results[0].boxes.xyxy.cpu().tolist()    # 偵測到的物件的邊界框座標
             track_ids = results[0].boxes.id.int().cpu().tolist()    # 偵測到的物件的唯一追蹤 ID
-            clss = results[0].boxes.cls.cpu().tolist()  # 提取車輛類別
+            clss = results[0].boxes.cls.cpu().tolist()  # 偵測到的物件的類別索引
 
-            # 處理檢測結果並更新停車區域狀態並回傳已占用車位數量
-            management.process_data(json_data, frame, boxes, clss)
-
-            # 處理檢測結果並更新停車區域狀態
+            # 處理檢測結果並更新停車區域狀態，回傳已占用車位數量
             management.process_data(json_data, frame, boxes, clss)
 
             # 取出空車位、已被使用車位數量
-            occupied_space = management.labels_dict['Occupancy']
-            empty_space = management.labels_dict['Available']
+            occupied_space = management.labels_dict['Occupancy']    # 已占用車位
+            empty_space = management.labels_dict['Available']   # 空車位
             print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}")
 
             # annotator = Annotator(frame, line_width=line_thickness, example=str(names))
@@ -141,18 +138,6 @@ def process_video(
                 # 繪製追蹤線
                 cv2.polylines(frame, [points], isClosed=False, color=colors(cls, True), thickness=track_thickness)
                 
-                # 判斷車輛是否靜止（即至少有兩個座標點）
-                if len(track) > 1:
-                    # 計算兩點之間的歐幾里得距離（即直線距離）(求範數)
-                    movement = np.linalg.norm(np.array(track[-1]) - np.array(track[0]))
-
-                    # 車輛移動距離小於靜止閾值，則判定為靜止並增加計數
-                    if movement < stationary_threshold:
-                        for region in counting_regions:
-                            # 檢查車輛的中心點是否位於計算範圍內
-                            if region["polygon"].contains(Point((bbox_center[0], bbox_center[1]))):
-                                region["counts"] += 1
-
         # 繪製計數區域，更新車位資訊
         for region in counting_regions:
             # 提取計算範圍的頂點座標
@@ -164,18 +149,17 @@ def process_video(
             cv2.putText(frame, f"{region['name']}: {region['counts']}", (points[0][0], points[0][1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, region["text_color"], 2)
 
-        if save_img:   # 保存結果
+        # 保存影像
+        if save_img:
             video_writer.write(frame)
         
+        # 每隔 'save_frame_interval' 幀保存當前幀
         if vid_frame_count % save_frame_interval == 0:
             filename = frames_dir / f"frame_{vid_frame_count}.jpg"
             cv2.imwrite(str(filename), frame)
-            
-            # 更新車位狀態
-            # empty_space, occupied_space = management.status()
-            # print(occupied_space)
-            
-        if view_img:  # 瀏覽結果
+        
+        # 顯示處理後的影像
+        if view_img:
             cv2.imshow(str(source), frame)
             if cv2.waitKey(1) == ord("q"):   # 點擊 q 鍵退出
                 break
@@ -188,42 +172,51 @@ def process_video(
         
     print(f"Process video saved to: {save_dir}")
 
-# 設定參數
-source = "./video/istockphoto_01.mp4"
-parking_name = "istockphoto"
-area_name = "istockphoto_01"
-total_space = 100
-weights = "./models/v6.pt"
-device = "0"  # 使用 GPU
-view_img = True
-save_img = True
-upload_firebase = False
-exist_ok = True
-classes = [0]  # 替換成你感興趣的類別
-line_thickness = 2
-track_thickness = 2
-region_thickness = 2
-stationary_threshold = 5
-save_interval_seconds = 5
-resize_factor = 0.5
+def main():
+    # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
+    video_sources = [
+        ("./video/istockphoto_01.mp4", "istockphoto", "istockphoto_01", 100),
+    ]
 
-# 執行影片處理
-process_video(
-    source, 
-    parking_name, 
-    area_name, 
-    total_space, 
-    weights, 
-    device, 
-    view_img, 
-    save_img, 
-    upload_firebase, 
-    exist_ok, 
-    classes, 
-    line_thickness, 
-    track_thickness, 
-    region_thickness, 
-    stationary_threshold, 
-    save_interval_seconds, 
-    resize_factor
-)
+    # 設定參數
+    weights = "./models/v6.pt"  # model 檔案的路徑
+    device = "0"    # 使用設備，"0" -> GPU
+    view_img = True # 顯示影像
+    save_img = True # 保存影像(影片)
+    upload_firebase = False  # 儲存資料到 Firebase
+    exist_ok = True    # 設置為 False 會創建新的遞增目錄名稱
+    classes = [0]   # 要檢測的類別(car)
+    line_thickness = 2  # 框線的寬度
+    track_thickness = 2 # 追蹤線的寬度
+    region_thickness = 2    # 區域線的寬度
+    stationary_threshold = 5    # 判定車輛靜止的閾值
+    save_interval_seconds = 5   # 保存圖片的時間間隔(秒)
+    resize_factor = 0.5 # 圖片縮放比例
+
+    # 建立一個包含多個進程的處理池 (Pool)，每個影片來源對應一個進程
+    # (with -> 處理池使用完後會自動關閉，釋放資源)
+    with mp.Pool(processes=len(video_sources)) as pool:
+        # 將函數應用於參數的序列，允許將多個參數傳遞給函數
+        pool.starmap(
+            process_video,  # 要並行運行的函數
+            # 要傳遞給 process_video 函數的參數
+            [(source, 
+            parking_name, 
+            area_name, 
+            total_space, 
+            weights, device, 
+            view_img, 
+            save_img, 
+            upload_firebase, 
+            exist_ok, classes, 
+            line_thickness, 
+            track_thickness, 
+            region_thickness, 
+            stationary_threshold, 
+            save_interval_seconds, 
+            resize_factor) for source, parking_name, area_name, total_space in video_sources]
+        )
+        # source(影像位置)、parking_name(停車場名稱)、area_name(區域名稱)、total_space(車位總數量)
+
+if __name__ == "__main__":
+    main()
