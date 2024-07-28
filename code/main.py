@@ -19,16 +19,16 @@ import multiprocessing as mp
 track_history = defaultdict(list)
 
 # Firebase 初始化
-cred = credentials.Certificate("code/firebase/parking_key.json")
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'parking-cce55.appspot.com'
-})
+# cred = credentials.Certificate("code/firebase/parking_key.json")
+# firebase_admin.initialize_app(cred, {
+#     'storageBucket': 'parking-cce55.appspot.com'
+# })
 
 # 測試用資料庫
-# cred = credentials.Certificate("code/firebase/parking-test_key.json")
-# firebase_admin.initialize_app(cred, {
-#     'storageBucket': 'parking-test-f9490.appspot.com'
-# })
+cred = credentials.Certificate("code/firebase/parking-test_key.json")
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'parking-test-f9490.appspot.com'
+})
 
 # 取得 bucket 名稱
 bucket_name = firebase_storage.bucket().name
@@ -292,6 +292,7 @@ def main():
             save_interval_seconds, 
             resize_factor) for source, parking_name, area_name, total_space in video_sources]
         )
+        # source(影像位置)、parking_name(停車場名稱)、area_name(區域名稱)、total_space(車位總數量)
 
 if __name__ == "__main__":
     main()
