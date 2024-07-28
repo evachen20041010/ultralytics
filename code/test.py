@@ -104,7 +104,17 @@ def process_video(
             boxes = results[0].boxes.xyxy.cpu().tolist()    # 提取邊界框坐標
             track_ids = results[0].boxes.id.int().cpu().tolist()    # 偵測到的物件的唯一追蹤 ID
             clss = results[0].boxes.cls.cpu().tolist()  # 提取車輛類別
-            management.process_data(json_data, frame, boxes, clss)    # 處理檢測結果並更新停車區域狀態
+
+            # 處理檢測結果並更新停車區域狀態並回傳已占用車位數量
+            management.process_data(json_data, frame, boxes, clss)
+
+            # 處理檢測結果並更新停車區域狀態
+            management.process_data(json_data, frame, boxes, clss)
+
+            # 取出空車位、已被使用車位數量
+            occupied_space = management.labels_dict['Occupancy']
+            empty_space = management.labels_dict['Available']
+            print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}")
 
             # annotator = Annotator(frame, line_width=line_thickness, example=str(names))
 
@@ -163,6 +173,7 @@ def process_video(
             
             # 更新車位狀態
             # empty_space, occupied_space = management.status()
+            # print(occupied_space)
             
         if view_img:  # 瀏覽結果
             cv2.imshow(str(source), frame)
