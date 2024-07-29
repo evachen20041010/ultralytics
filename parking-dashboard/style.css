@@ -1,0 +1,137 @@
+/* style.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+header {
+    background-color: #2196F3;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px; /* 設定一個固定高度 */
+}
+header h1 {
+    margin: 0; /* 移除標題的預設邊距 */
+}
+.dashboard {
+    display: flex;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    flex-grow: 1;
+}
+.sidebar {
+    width: 250px;
+    background-color: #e3f2fd;
+    padding: 20px;
+    padding-top: 50px;
+}
+.sidebar h2 {
+    text-align: center;
+}
+.main-content {
+    flex-grow: 1;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+.main-content h2 {
+    text-align: center;
+}
+.menu-button {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: white; /* 默認顏色 */
+}
+.menu-button.active {
+    color: black; /* active 狀態下的顏色 */
+}
+h2 {
+    margin-top: 0;
+}
+.parking-lot-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #bbdefb;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.parking-lot-button:hover {
+    background-color: #90caf9;
+}
+.parking-lot-button p {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 5px;
+    text-align: center;
+}
+.main-image {
+    margin-bottom: 20px;
+}
+.main-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+.main-image p {
+    text-align: center;
+}
+.small-images {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.small-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+.small-image p {
+    margin-top: 10px;
+    margin-bottom: 0px;
+    margin-left: 5px;
+}
+@media (max-width: 768px) {
+    .dashboard {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 100%;
+        display: none;
+    }
+    .menu-button {
+        display: block;
+        position: absolute;
+        top: 28px; /* 調整位置以適應新的 header 高度 */
+        left: 10px;
+        z-index: 1000;
+        color: white;
+    }
+    .sidebar.active {
+        display: block;
+    }
+}
