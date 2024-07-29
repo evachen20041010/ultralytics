@@ -49,6 +49,31 @@ def upload_firestore(parking_name, area_name, total_space, occupied_space, empty
     print(f"total_space={total_space}, occupied_space={occupied_space}, empty_space={empty_space}")
     print(f"Data uploaded to {parking_name}/{area_name}.")
 
+# 新增分割和保存圖片的函數
+def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase):
+    # 取得圖片的尺寸
+    h, w = frame.shape[:2]
+
+    # 計算每個區域的寬高
+    quadrant_h, quadrant_w = h // 2, w // 2
+
+    # 分割圖片
+    quadrants = [
+        frame[0:quadrant_h, 0:quadrant_w],         # top-left
+        frame[0:quadrant_h, quadrant_w:w],         # top-right
+        frame[quadrant_h:h, 0:quadrant_w],         # bottom-left
+        frame[quadrant_h:h, quadrant_w:w]          # bottom-right
+    ]
+
+    # 儲存每個分割後的圖片
+    for i, quadrant in enumerate(quadrants, start=1):
+        quadrant_filename = save_dir / "frames_four" / f"frame_{vid_frame_count}_{i}.jpg"
+        cv2.imwrite(str(quadrant_filename), quadrant)
+
+        # 上傳資料到 Firebase
+        if upload_firebase:
+            upload_storage(bucket_name, str(quadrant_filename), f"{parking_name}/{area_name}/frames_four/frame_{vid_frame_count}_{i}.jpg")
+
 def process_video(
         source, 
         parking_name, 
@@ -191,9 +216,12 @@ def process_video(
             filename = frames_dir / f"frame_{vid_frame_count}.jpg"
             cv2.imwrite(str(filename), frame)
 
+            # 保存分割後的圖片
+            save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase)
+
             # 上傳資料到 Firebase
             if upload_firebase:
-                upload_storage(bucket_name, filename, f"{parking_name}/{area_name}/images/frame_{vid_frame_count:04d}.jpg")
+                upload_storage(bucket_name, filename, f"{parking_name}/{area_name}/frames/frame_{vid_frame_count:04d}.jpg")
                 upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space)
         
         # 顯示處理後的影像
@@ -214,7 +242,7 @@ def main():
     # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
     video_sources = [
         ("./video/istockphoto_01.mp4", "istockphoto", "istockphoto_01", 100),
-        ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
+        # ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
     ]
 
     # 設定參數
