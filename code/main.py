@@ -41,15 +41,14 @@ def upload_storage(bucket_name, source_file_name, destination_blob_name):
     print(f"File {source_file_name} uploaded to {destination_blob_name}.")
 
 # 上傳資料到 Firestore
-def upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space):
+def upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space, max_empty_space, min_empty_space):
     db = firestore.client()
     doc_ref = db.collection(parking_name).document(area_name)
-    doc_ref.set({"total_space": total_space, "occupied_space": occupied_space, "empty_space": empty_space})
+    doc_ref.set({"total_space": total_space, "occupied_space": occupied_space, "empty_space": empty_space, "max_empty_space": max_empty_space, "min_empty_space": min_empty_space})
     
-    print(f"total_space={total_space}, occupied_space={occupied_space}, empty_space={empty_space}")
+    print(f"total_space={total_space}, occupied_space={occupied_space}, empty_space={empty_space}, max_empty_space={max_empty_space}, min_empty_space={min_empty_space}")
     print(f"Data uploaded to {parking_name}/{area_name}.")
 
-# 新增分割和保存圖片的函數
 def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase):
     # 取得圖片的尺寸
     h, w = frame.shape[:2]
@@ -65,14 +64,44 @@ def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_na
         frame[quadrant_h:h, quadrant_w:w]          # bottom-right
     ]
 
+    # 定義紅色的範圍（HSV顏色空間）
+    lower_red = np.array([0, 100, 100])
+    upper_red = np.array([10, 255, 255])
+
+    # 用來記錄每個區塊的紅色框框數量
+    red_counts = []
+
     # 儲存每個分割後的圖片
     for i, quadrant in enumerate(quadrants, start=1):
+        # 儲存每個分割後的圖片
         quadrant_filename = save_dir / "frames_four" / f"frame_{vid_frame_count}_{i}.jpg"
         cv2.imwrite(str(quadrant_filename), quadrant)
+
+        # 檢測紅色框框數量
+        hsv_image = cv2.cvtColor(quadrant, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv_image, lower_red, upper_red)
+        red_area = cv2.countNonZero(mask)
+        red_counts.append(red_area)
 
         # 上傳資料到 Firebase
         if upload_firebase:
             upload_storage(bucket_name, str(quadrant_filename), f"{parking_name}/{area_name}/frames_four/frame_{vid_frame_count}_{i}.jpg")
+    
+    # 比較紅色框框的數量
+    max_red_count = max(red_counts)
+    max_index = red_counts.index(max_red_count) + 1  # 1-based index
+
+    # 找到紅色框框最少的區塊
+    min_red_count = min(red_counts)
+    min_index = red_counts.index(min_red_count) + 1  # 1-based index
+
+    # 打印每個區塊的紅色框框數量
+    print(f"Red boxes count for each quadrant: {red_counts}")
+    print(f"Quadrant with most red boxes is: Top-Left (1), Top-Right (2), Bottom-Left (3), Bottom-Right (4) => Quadrant {max_index}")
+    print(f"Quadrant with least red boxes is: Top-Left (1), Top-Right (2), Bottom-Left (3), Bottom-Right (4) => Quadrant {min_index}")
+
+    return max_index, min_index
+
 
 def process_video(
         source, 
@@ -217,12 +246,12 @@ def process_video(
             cv2.imwrite(str(filename), frame)
 
             # 保存分割後的圖片
-            save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase)
+            max_empty_space, min_empty_space = save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase)
 
             # 上傳資料到 Firebase
             if upload_firebase:
                 upload_storage(bucket_name, filename, f"{parking_name}/{area_name}/frames/frame_{vid_frame_count:04d}.jpg")
-                upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space)
+                upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space, max_empty_space, min_empty_space)
         
         # 顯示處理後的影像
         if view_img:
@@ -242,7 +271,7 @@ def main():
     # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
     video_sources = [
         ("./video/istockphoto_01.mp4", "istockphoto", "istockphoto_01", 100),
-        # ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
+        ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
     ]
 
     # 設定參數
