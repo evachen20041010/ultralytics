@@ -250,7 +250,7 @@ def process_video(
 
             # 上傳資料到 Firebase
             if upload_firebase:
-                upload_storage(bucket_name, filename, f"{parking_name}/{area_name}/frames/frame_{vid_frame_count:04d}.jpg")
+                upload_storage(bucket_name, filename, f"{parking_name}/{area_name}/frames/frame_{vid_frame_count}.jpg")
                 upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space, max_empty_space, min_empty_space)
         
         # 顯示處理後的影像

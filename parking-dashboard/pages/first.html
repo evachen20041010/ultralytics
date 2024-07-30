@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>綠能停車導引系統</title>
-    <link href="../style.css" rel="stylesheet" type="text/css" />
-    <script src="../script.js"></script>
+    <link href="../styles/style.css" rel="stylesheet" type="text/css" />
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-storage-compat.js"></script>
+    <script src="../scripts/script.js"></script>
+    <script src="../scripts/first.js"></script>
 </head>
 <body>
     <div class="container">
@@ -23,24 +27,24 @@
             <main class="main-content">
                 <h2>1號停車場</h2>
                 <div class="main-image">
-                    <img src="https://via.placeholder.com/800x400" alt="停車場概覽">
+                    <img src="https://via.placeholder.com/800x400" alt="停車場概覽" id="main-first">
                     <p>車位總數：56　空車位總數：17</p>
                 </div>
                 <div class="small-images">
                     <div class="small-image">
-                        <img src="https://via.placeholder.com/400x200" alt="停車區域 1">
+                        <img src="https://via.placeholder.com/400x200" alt="停車區域 1" id="small-first-1">
                         <p>空車位：2</p>
                     </div>
                     <div class="small-image">
-                        <img src="https://via.placeholder.com/400x200" alt="停車區域 2">
+                        <img src="https://via.placeholder.com/400x200" alt="停車區域 2" id="small-first-2">
                         <p>空車位：3</p>
                     </div>
                     <div class="small-image">
-                        <img src="https://via.placeholder.com/400x200" alt="停車區域 3">
+                        <img src="https://via.placeholder.com/400x200" alt="停車區域 3" id="small-first-3">
                         <p>空車位：7</p>
                     </div>
                     <div class="small-image">
-                        <img src="https://via.placeholder.com/400x200" alt="停車區域 4">
+                        <img src="https://via.placeholder.com/400x200" alt="停車區域 4" id="small-first-4">
                         <p>空車位：5</p>
                     </div>
                 </div>
