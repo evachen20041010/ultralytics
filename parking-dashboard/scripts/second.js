@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.location.href = '/parking-dashboard/pages/second.html';
   });
 
-  // Fetch and display image from Firebase Storage
   const mainRef_first = storage.ref('istockphoto/istockphoto_02/frames');
 
   mainRef_first.listAll().then((res) => {
@@ -63,6 +62,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }).catch((error) => {
     console.error("Error listing files:", error);
+  });
+
+  const docRef = db.collection('istockphoto').doc('istockphoto_02');
+
+  docRef.get().then((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      const max_empty_space = parseInt(data.max_empty_space);
+      const min_empty_space = parseInt(data.min_empty_space);
+
+      if (data && data.total_space !== undefined) {
+        document.getElementById('main-second-text').textContent = `車位總數：${data.total_space}　空車位總數：${data.empty_space || '未提供'}`;
+      } else {
+        console.error('No data found or total_space not defined');
+      }
+
+      if (data.max_empty_space !== undefined && data.min_empty_space !== undefined){
+        document.getElementById(`small-second-${max_empty_space}-text`).textContent = "空車位較多";
+        document.getElementById(`small-second-${max_empty_space}-text`).style.backgroundColor = 'green';
+        document.getElementById(`small-second-${max_empty_space}-text`).style.color = 'white';
+        document.getElementById(`small-second-${min_empty_space}-text`).textContent = "空車位較少";
+        document.getElementById(`small-second-${min_empty_space}-text`).style.backgroundColor = 'red';
+        document.getElementById(`small-second-${min_empty_space}-text`).style.color = 'white';
+      } else {
+        console.error('No data found or max_empty_space or min_empty_space not defined');
+      }
+    } else {
+      console.error('No such document!');
+    }
+  }).catch((error) => {
+    console.error('Error getting document:', error);
   });
 });
   

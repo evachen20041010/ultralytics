@@ -18,7 +18,7 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 60px; /* 設定一個固定高度 */
+    height: 50px; /* 設定一個固定高度 */
 }
 header h1 {
     margin: 0; /* 移除標題的預設邊距 */
@@ -94,7 +94,9 @@ h2 {
     border-radius: 8px;
 }
 .main-image p {
+    margin-top: 10px;
     text-align: center;
+    font-weight: bold;
 }
 .small-images {
     display: grid;
@@ -107,9 +109,54 @@ h2 {
     border-radius: 8px;
 }
 .small-image p {
-    margin-top: 10px;
+    margin-top: 5px;
     margin-bottom: 0px;
     margin-left: 5px;
+    text-align: center;
+    font-weight: bold;
+    color: black;
+    background-color: white;
+}
+.main-page-div {
+    margin-bottom: 20px;
+    background-color: #bbdefb;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 20px;
+    padding-bottom: 0px;
+}
+.main-page-div img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.main-page-div p {
+    margin-top: 0px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+.description-and-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px;
+}
+.description-text {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+.details-button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.details-button:hover {
+    background-color: #1976D2;
 }
 @media (max-width: 768px) {
     .dashboard {
@@ -126,7 +173,7 @@ h2 {
     .menu-button {
         display: block;
         position: absolute;
-        top: 28px; /* 調整位置以適應新的 header 高度 */
+        top: 28px;
         left: 10px;
         z-index: 1000;
         color: white;
