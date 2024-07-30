@@ -12,11 +12,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.getElementById('parkingLot1').addEventListener('click', function() {
-        window.location.href = 'main.html';
+    document.getElementById('main-page').addEventListener('click', function() {
+        window.location.href = '/parking-dashboard/main.html';
     });
 
-    document.getElementById('parkingLot2').addEventListener('click', function() {
-        window.location.href = 'second.html';
+    document.getElementById('first-parking').addEventListener('click', function() {
+        window.location.href = '/parking-dashboard/page/first.html';
+    });
+
+    document.getElementById('second-parking').addEventListener('click', function() {
+        window.location.href = '/parking-dashboard/page/second.html';
     });
 });
