@@ -95,7 +95,7 @@ def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_na
     min_red_count = min(red_counts)
     min_index = red_counts.index(min_red_count) + 1  # 1-based index
 
-    # 打印每個區塊的紅色框框數量
+    # 輸出最多與最少結果
     print(f"Red boxes count for each quadrant: {red_counts}")
     print(f"Quadrant with most red boxes is: Top-Left (1), Top-Right (2), Bottom-Left (3), Bottom-Right (4) => Quadrant {max_index}")
     print(f"Quadrant with least red boxes is: Top-Left (1), Top-Right (2), Bottom-Left (3), Bottom-Right (4) => Quadrant {min_index}")
