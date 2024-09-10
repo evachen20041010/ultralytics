@@ -30,9 +30,9 @@ firebase_admin.initialize_app(cred, {
 # 取得 bucket 名稱
 bucket_name = firebase_storage.bucket().name
 
-# 上傳資料到 Firebase Storage
+# 上傳資料到 Google Cloud Storage
 def upload_storage(bucket_name, source_file_name, destination_blob_name):
-    # 使用專案 ID 初始化 Google Cloud Storage 用戶端
+    # 使用專案 ID 初始化 Storage 用戶端
     storage_client = storage.Client.from_service_account_json('code/firebase/parking-test_key.json')
     
     bucket = storage_client.bucket(bucket_name)
@@ -40,15 +40,22 @@ def upload_storage(bucket_name, source_file_name, destination_blob_name):
     blob.upload_from_filename(source_file_name) # 上傳檔案
     print(f"File {source_file_name} uploaded to {destination_blob_name}.")
 
-# 上傳資料到 Firestore
+# 上傳資料到 Cloud Firestore
 def upload_firestore(parking_name, area_name, total_space, occupied_space, empty_space, max_empty_space, min_empty_space):
     db = firestore.client()
     doc_ref = db.collection(parking_name).document(area_name)
-    doc_ref.set({"total_space": total_space, "occupied_space": occupied_space, "empty_space": empty_space, "max_empty_space": max_empty_space, "min_empty_space": min_empty_space})
+    doc_ref.set({
+        "total_space": total_space, 
+        "occupied_space": occupied_space, 
+        "empty_space": empty_space, 
+        "max_empty_space": max_empty_space, 
+        "min_empty_space": min_empty_space
+    })
     
     print(f"total_space={total_space}, occupied_space={occupied_space}, empty_space={empty_space}, max_empty_space={max_empty_space}, min_empty_space={min_empty_space}")
     print(f"Data uploaded to {parking_name}/{area_name}.")
 
+# 分區域辨識最多最少空車位
 def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_name, upload_firebase):
     # 取得圖片的尺寸
     h, w = frame.shape[:2]
@@ -170,7 +177,7 @@ def process_video(
     management = solutions.ParkingManagement(weights, margin=1)
 
     # 從JSON文件中提取車位的邊界框數據
-    polygon_json_path = Path("./code/boxes_json") / f"{area_name}.json"
+    polygon_json_path = Path("./code/boxes_json") / f"{area_name}_id.json"
     with open(polygon_json_path, 'r') as f:
         json_data = json.load(f)
 
