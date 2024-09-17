@@ -183,6 +183,8 @@ class ParkingManagement:
         # Check if environment supports imshow
         self.env_check = check_imshow(warn=True)
 
+        self.empty_space_ids = []
+
     def load_model(self):
         """Load the Ultralytics YOLOv8 model for inference and analytics."""
         from ultralytics import YOLO
@@ -218,8 +220,11 @@ class ParkingManagement:
         total_slots, filled_slots = len(json_data), 0
         empty_slots = total_slots
 
+        available_ids = []  # 儲存未佔用停車位的 ID
+
         for region in json_data:
             points = region["points"]
+            region_id = region["id"]  # 獲取停車位的 ID
             points_array = np.array(points, dtype=np.int32).reshape((-1, 1, 2))
             region_occupied = False
 
@@ -241,9 +246,12 @@ class ParkingManagement:
             if region_occupied:
                 filled_slots += 1
                 empty_slots -= 1
+            else:
+                available_ids.append(region_id)  # 將未佔用的停車位 ID 加入列表
 
         self.labels_dict["Occupancy"] = filled_slots
         self.labels_dict["Available"] = empty_slots
+        self.empty_space_ids = available_ids
 
         annotator.display_analytics(im0, self.labels_dict, self.txt_color, self.bg_color, self.margin)
 
