@@ -241,7 +241,8 @@ def process_video(
             total_space = occupied_space + empty_space
             print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}, Total: {total_space}")
 
-            empty_space_ids = management.empty_space_ids
+            # empty_space_ids = management.empty_space_ids
+            empty_space_ids = []
             print(empty_space_ids)
 
             # annotator = Annotator(frame, line_width=line_thickness, example=str(names))

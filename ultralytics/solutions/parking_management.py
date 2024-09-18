@@ -154,6 +154,7 @@ class ParkingManagement:
         available_region_color=(0, 0, 255),
         margin=10,
     ):
+        print("Initializing ParkingManagement")
         """
         Initializes the parking management system with a YOLOv8 model and visualization settings.
 
@@ -184,6 +185,7 @@ class ParkingManagement:
         self.env_check = check_imshow(warn=True)
 
         self.empty_space_ids = []
+        print(f"Initialized empty_space_ids: {self.empty_space_ids}")
 
     def load_model(self):
         """Load the Ultralytics YOLOv8 model for inference and analytics."""
