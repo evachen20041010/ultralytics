@@ -14,6 +14,7 @@ from firebase_admin import credentials, storage as firebase_storage, firestore
 from google.cloud import storage
 
 import multiprocessing as mp
+from multiprocessing import Manager
 
 import json
 from ultralytics import solutions
@@ -136,8 +137,8 @@ def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_na
 
     return max_index, min_index
 
-
 def process_video(
+        parking_management,
         source, 
         parking_name, 
         area_name, 
@@ -201,7 +202,7 @@ def process_video(
     frames_dir.mkdir(parents=True, exist_ok=True)
 
     # 初始化停車管理系統
-    management = solutions.ParkingManagement(weights, margin=1)
+    # management = solutions.ParkingManagement(weights, margin=1)
 
     # 從JSON文件中提取車位的邊界框數據
     polygon_json_path = Path("./code/boxes_json") / f"{area_name}_id.json"
@@ -218,7 +219,7 @@ def process_video(
 
         # 進行物件偵測和追蹤
         # persist：記住前一幀中已經偵測到的物件，並在後續幀中嘗試繼續追蹤這些物件
-        results = management.model.track(frame, persist=True, classes=classes)
+        results = parking_management.model.track(frame, persist=True, classes=classes)
 
         if results[0].boxes.id is not None:
             boxes = results[0].boxes.xyxy.cpu().tolist()    # 偵測到的物件的邊界框座標
@@ -233,16 +234,16 @@ def process_video(
             # print(empty_space_ids)
 
             # 處理檢測結果並更新停車區域狀態，回傳已占用車位數量
-            management.process_data(json_data, frame, boxes, clss)
+            parking_management.process_data(json_data, frame, boxes, clss)
 
             # 取出空車位、已被使用車位數量
-            occupied_space = management.labels_dict['Occupancy']    # 已占用車位
-            empty_space = management.labels_dict['Available']   # 空車位
+            occupied_space = parking_management.labels_dict['Occupancy']    # 已占用車位
+            empty_space = parking_management.labels_dict['Available']   # 空車位
             total_space = occupied_space + empty_space
             print(f"{area_name} Occupied: {occupied_space}, Empty: {empty_space}, Total: {total_space}")
 
-            # empty_space_ids = management.empty_space_ids
-            empty_space_ids = []
+            empty_space_ids = parking_management.empty_space_ids
+            # empty_space_ids = []
             print(empty_space_ids)
 
             # annotator = Annotator(frame, line_width=line_thickness, example=str(names))
@@ -315,51 +316,56 @@ def process_video(
     print(f"Process video saved to: {save_dir}")
 
 def main():
-    # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
-    video_sources = [
-        ("./video/istockphoto_01.mp4", "istockphoto", "istockphoto_01", 100),
-        ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
-    ]
+    with Manager() as manager:
+        # 要辨識的影片、停車場資料夾名稱、區塊資料夾名稱、區塊車位總數量
+        video_sources = [
+            ("./video/istockphoto_01.mp4", "istockphoto", "istockphoto_01", 100),
+            ("./video/istockphoto_02.mp4", "istockphoto", "istockphoto_02", 100),
+        ]
 
-    # 設定參數
-    weights = "./models/v7.pt"  # model 檔案的路徑
-    device = "0"    # 使用設備，"0" -> GPU
-    view_img = True # 顯示影像
-    save_img = True # 保存影像(影片)
-    upload_firebase = True  # 儲存資料到 Firebase
-    exist_ok = True    # 設置為 False 會創建新的遞增目錄名稱
-    classes = [0]   # 要檢測的類別(car)
-    line_thickness = 2  # 框線的寬度
-    track_thickness = 2 # 追蹤線的寬度
-    region_thickness = 2    # 區域線的寬度
-    stationary_threshold = 5    # 判定車輛靜止的閾值
-    save_interval_seconds = 5   # 保存圖片的時間間隔(秒)
-    resize_factor = 0.5 # 圖片縮放比例
+        # 設定參數
+        weights = "./models/v7.pt"  # model 檔案的路徑
+        device = "0"    # 使用設備，"0" -> GPU
+        view_img = True # 顯示影像
+        save_img = True # 保存影像(影片)
+        upload_firebase = True  # 儲存資料到 Firebase
+        exist_ok = True    # 設置為 False 會創建新的遞增目錄名稱
+        classes = [0]   # 要檢測的類別(car)
+        line_thickness = 2  # 框線的寬度
+        track_thickness = 2 # 追蹤線的寬度
+        region_thickness = 2    # 區域線的寬度
+        stationary_threshold = 5    # 判定車輛靜止的閾值
+        save_interval_seconds = 5   # 保存圖片的時間間隔(秒)
+        resize_factor = 0.5 # 圖片縮放比例
 
-    # 建立一個包含多個進程的處理池 (Pool)，每個影片來源對應一個進程
-    # (with -> 處理池使用完後會自動關閉，釋放資源)
-    with mp.Pool(processes=len(video_sources)) as pool:
-        # 將函數應用於參數的序列，允許將多個參數傳遞給函數
-        pool.starmap(
-            process_video,  # 要並行運行的函數
-            # 要傳遞給 process_video 函數的參數
-            [(source, 
-            parking_name, 
-            area_name, 
-            total_space, 
-            weights, device, 
-            view_img, 
-            save_img, 
-            upload_firebase, 
-            exist_ok, classes, 
-            line_thickness, 
-            track_thickness, 
-            region_thickness, 
-            stationary_threshold, 
-            save_interval_seconds, 
-            resize_factor) for source, parking_name, area_name, total_space in video_sources]
-        )
-        # source(影像位置)、parking_name(停車場名稱)、area_name(區域名稱)、total_space(車位總數量)
+        parking_management = solutions.ParkingManagement(weights, margin=1)
+        parking_management.empty_space_ids = manager.list()  # 使用共享列表
+
+        # 建立一個包含多個進程的處理池 (Pool)，每個影片來源對應一個進程
+        # (with -> 處理池使用完後會自動關閉，釋放資源)
+        with mp.Pool(processes=len(video_sources)) as pool:
+            # 將函數應用於參數的序列，允許將多個參數傳遞給函數
+            pool.starmap(
+                process_video,  # 要並行運行的函數
+                # 要傳遞給 process_video 函數的參數
+                [(parking_management,
+                source, 
+                parking_name, 
+                area_name, 
+                total_space, 
+                weights, device, 
+                view_img, 
+                save_img, 
+                upload_firebase, 
+                exist_ok, classes, 
+                line_thickness, 
+                track_thickness, 
+                region_thickness, 
+                stationary_threshold, 
+                save_interval_seconds, 
+                resize_factor) for source, parking_name, area_name, total_space in video_sources]
+            )
+            # source(影像位置)、parking_name(停車場名稱)、area_name(區域名稱)、total_space(車位總數量)
 
 if __name__ == "__main__":
     main()
