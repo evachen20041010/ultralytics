@@ -318,7 +318,7 @@ def main():
     ]
 
     # 設定參數
-    weights = "./models/v7.pt"  # model 檔案的路徑
+    weights = "./models/v9.pt"  # model 檔案的路徑
     device = "0"    # 使用設備，"0" -> GPU
     view_img = True # 顯示影像
     save_img = True # 保存影像(影片)
