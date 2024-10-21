@@ -124,11 +124,11 @@ def save_quadrant_images(frame, save_dir, vid_frame_count, parking_name, area_na
     
     # 比較紅色框框的數量
     max_red_count = max(red_counts)
-    max_index = red_counts.index(max_red_count) + 1  # 1-based index
+    min_index = red_counts.index(max_red_count) + 1  # 1-based index
 
     # 找到紅色框框最少的區塊
     min_red_count = min(red_counts)
-    min_index = red_counts.index(min_red_count) + 1  # 1-based index
+    max_index = red_counts.index(min_red_count) + 1  # 1-based index
 
     # 輸出最多與最少結果
     print(f"Red boxes count for each quadrant: {red_counts}")
@@ -197,7 +197,7 @@ def process_video(
     frames_dir.mkdir(parents=True, exist_ok=True)
 
     # 初始化停車管理系統
-    management = solutions.ParkingManagement(weights, margin=1)
+    management = solutions.ParkingManagement(weights, margin=1, occupied_region_color=(0, 0, 255), available_region_color=(0, 255, 0))
 
     # 從JSON文件中提取車位的邊界框數據
     polygon_json_path = Path("./code/boxes_json") / f"{area_name}_id.json"
